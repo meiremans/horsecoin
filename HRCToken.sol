@@ -20,7 +20,9 @@ contract HRCToken is StandardToken, SafeMath {
     uint256 public fundingEndBlock;
     uint256 public constant hrcFund = 500 * (10**6) * 10**decimals;   // 500m HRC reserved for Horsecoin use
     uint256 public constant tokenExchangeRate = 10000; // 10000 HRC tokens per 1 ETH
-    uint256 public constant tokenCreationCap =  2 * (10**6) * 10**decimals;//200.000.000 HRC TOKENS MAX
+
+
+    uint256 public constant tokenCreationCap =  5 * (10**6) * 10**decimals;//500.000.000 HRC TOKENS MAX
     uint256 public constant tokenCreationMin =  1 * (10**6) * 10**decimals;//100.000.000 HRC TOKENS MIN
 
 
