@@ -17,6 +17,9 @@ Getting started:
 
 cd into contract dir
 
+copy /secret/mnemonic.example.json to /secret/monemonic.json and change it to your mnemonic.
+in contracts/HorseCoinCrowdsale change wallet to the wallet you want the money to appear
+
 npm install
 
 truffle migrate
