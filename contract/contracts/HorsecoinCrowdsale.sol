@@ -83,8 +83,7 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     // Override this method to have a way to add business logic to your crowdsale when buying
     // Returns weiAmount times rate by default
     function getTokenAmount(uint256 weiAmount) internal view returns (uint256) {
-        return super.getTokenAmount(weiAmount * 6
-        );
+        return super.getTokenAmount(weiAmount * rate);
     }
 
     // Override to create custom fund forwarding mechanisms
