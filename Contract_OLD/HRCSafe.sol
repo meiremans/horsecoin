@@ -11,6 +11,7 @@ contract HRCSafe {
     HRC = _HRC;
     unlockDate = now + 6 * 30 days; //half a year
     allocations[0x8D3AfE0bd3e0FbF96e6a78103d100C359e0b17e5] = 100000;
+    allocations[0x73f787BD3aEcb8cEbc4843C7420542a2660CE433] = 100000;
   }
 
   function unlock() external {
