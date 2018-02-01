@@ -16,10 +16,12 @@ module.exports = function (deployer, network, accounts) {
                     const rate = new web3.BigNumber(RATE);
                     const cap = new web3.BigNumber(5 * Math.pow(10, 18));
                     const goal = new web3.BigNumber(3 *Math.pow(10, 18));
-                    console.log(cap);
                     const wallet = accounts[0];
+                    const teamwallet = accounts[7];
+                    const ecosystemwallet = accounts[8];
+                    const bountywallet = accounts[9];
 
-                    deployer.deploy(HorsecoinCrowdsale, startTime, endTime, rate, cap, goal, wallet).then( async () => {
+                    deployer.deploy(HorsecoinCrowdsale, startTime, endTime, rate, cap, goal, wallet,teamwallet,ecosystemwallet,bountywallet).then( async () => {
                         const instance = await HorsecoinCrowdsale.deployed();
                         const token = await instance.token.call();
 

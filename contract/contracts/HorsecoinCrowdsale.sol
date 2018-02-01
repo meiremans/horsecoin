@@ -42,8 +42,19 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     event EthRefunded(string text);
     event TokenMint(address indexed beneficiary, uint256 amount);
 
-
-    function HorseCoinCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _cap, uint256 _goal, address _wallet) public
+    /**
+        * @dev Contructor
+        * @param _startTime startTime of crowdsale
+        * @param _endTime endTime of crowdsale
+        * @param _rate HRC / ETH rate
+        * @param _cap The cap in WEI(hardcap)
+        * @param _goal the goal in WEI(softcap)
+        * @param _wallet wallet on which the contract gets created
+        * @param _teamWallet wallet for the team
+        * @param _ecosystemWallet wallet for the ecosystem
+        * @param _bountyWallet wallet for the bounties
+    */
+    function HorseCoinCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _cap, uint256 _goal, address _wallet, address _teamWallet, address _ecosystemWallet, address _bountyWallet) public
     CappedCrowdsale(_cap)
     FinalizableCrowdsale()
     RefundableCrowdsale(_goal)
@@ -53,9 +64,9 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
         wallet = _wallet;
         tokensCap = _cap;
         // allocate tokens to Owners
-        mintTokens(_wallet, tokensForTeam);
-        mintTokens(_wallet, tokensForEcosystem);
-        mintTokens(_wallet, tokensForBounty);
+        mintTokens(_teamWallet, tokensForTeam);
+        mintTokens(_ecosystemWallet, tokensForEcosystem);
+        mintTokens(_bountyWallet, tokensForBounty);
     }
 
     // HRC Crowdsale Stages
@@ -63,7 +74,7 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
 
     // Change Crowdsale Stage. Available Options: PreICO, ICOWave1
 
-    //TODO: Automate switch of stage
+    //TODO: Automate switch off stage
     function setCrowdsaleStage(uint value) public onlyOwner {
         CrowdsaleStage _stage;
 
@@ -75,11 +86,11 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
 
         stage = _stage;
 
-        if (stage == CrowdsaleStage.PreICO) {setCurrentBonus(200);}
-        if (stage == CrowdsaleStage.ICOWave1) {setCurrentBonus(100);}
-        if (stage == CrowdsaleStage.ICOWave2) {setCurrentBonus(75);}
-        if (stage == CrowdsaleStage.ICOWave3) {setCurrentBonus(50);}
-        if (stage == CrowdsaleStage.ICOWave4) {setCurrentBonus(25);}
+        if (stage == CrowdsaleStage.PreICO)     {setCurrentBonus(200);}
+        if (stage == CrowdsaleStage.ICOWave1)   {setCurrentBonus(100);}
+        if (stage == CrowdsaleStage.ICOWave2)   {setCurrentBonus(75);}
+        if (stage == CrowdsaleStage.ICOWave3)   {setCurrentBonus(50);}
+        if (stage == CrowdsaleStage.ICOWave4)   {setCurrentBonus(25);}
     }
 
     // Change the current bonus
