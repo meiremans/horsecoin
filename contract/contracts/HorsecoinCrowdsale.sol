@@ -19,6 +19,7 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     // Amount raised in PreICO
     // -------------------------
     uint256 public totalWeiInPreICO;
+    uint256 public totalWeiInICO;
     // -----------------------
     uint256 private bonus;
     uint256 private tokensCap;
@@ -79,13 +80,51 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     function setCrowdsaleStage(uint value) public onlyOwner {
         CrowdsaleStage _stage;
 
-        if (value == uint(CrowdsaleStage.PreICO))     {setCurrentBonus(200);  _stage = CrowdsaleStage.PreICO;}
-        if (value == uint(CrowdsaleStage.ICOWave1))   {setCurrentBonus(100);  _stage = CrowdsaleStage.ICOWave1;}
-        if (value == uint(CrowdsaleStage.ICOWave2))    {setCurrentBonus(75);  _stage = CrowdsaleStage.ICOWave2;}
-        if (value == uint(CrowdsaleStage.ICOWave3))    {setCurrentBonus(50);  _stage = CrowdsaleStage.ICOWave3;}
-        if (value == uint(CrowdsaleStage.ICOWave4))    {setCurrentBonus(25);  _stage = CrowdsaleStage.ICOWave4;}
+        if (value == uint(CrowdsaleStage.PreICO)) {setCurrentBonus(200);
+            _stage = CrowdsaleStage.PreICO;}
+        if (value == uint(CrowdsaleStage.ICOWave1)) {setCurrentBonus(100);
+            _stage = CrowdsaleStage.ICOWave1;}
+        if (value == uint(CrowdsaleStage.ICOWave2)) {setCurrentBonus(75);
+            _stage = CrowdsaleStage.ICOWave2;}
+        if (value == uint(CrowdsaleStage.ICOWave3)) {setCurrentBonus(50);
+            _stage = CrowdsaleStage.ICOWave3;}
+        if (value == uint(CrowdsaleStage.ICOWave4)) {setCurrentBonus(25);
+            _stage = CrowdsaleStage.ICOWave4;}
 
         stage = _stage;
+    }
+
+    function currentWaveCap() private returns (uint256) {
+        if (stage == CrowdsaleStage.PreICO) {
+            return totalTokensForSaleDuringPreICO;
+        }
+        if (stage == CrowdsaleStage.ICOWave1) {
+            return totalTokensForSaleDuringPreICO + (totalTokensForSaleDuringPreICO / 4);
+        }
+        if (stage == CrowdsaleStage.ICOWave2) {
+            return totalTokensForSaleDuringPreICO + ((totalTokensForSaleDuringPreICO / 4) * 2);
+        }
+        if (stage == CrowdsaleStage.ICOWave3) {
+            return totalTokensForSaleDuringPreICO + ((totalTokensForSaleDuringPreICO / 4) * 3);
+        }
+        if (stage == CrowdsaleStage.ICOWave4) {
+            return totalTokensForSaleDuringPreICO + (totalTokensForSaleDuringPreICO);
+        }
+    }
+
+    function incrementWave() private returns (uint256){
+        if (stage == CrowdsaleStage.PreICO) {
+            stage = CrowdsaleStage.ICOWave1;
+        }
+        if (stage == CrowdsaleStage.ICOWave1) {
+            stage = CrowdsaleStage.ICOWave2;
+        }
+        if (stage == CrowdsaleStage.ICOWave2) {
+            stage = CrowdsaleStage.ICOWave3;
+        }
+        if (stage == CrowdsaleStage.ICOWave3) {
+            stage = CrowdsaleStage.ICOWave4;
+        }
     }
 
     // Change the current bonus
@@ -120,9 +159,14 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
             wallet.transfer(msg.value);
             totalWeiInPreICO = totalWeiInPreICO.add(msg.value);
             EthTransferred("forwarding funds to wallet");
-        } else if (stage == CrowdsaleStage.ICOWave1) {
+        } else {
             super.forwardFunds();
+            totalWeiInICO = totalWeiInICO.add(msg.value);
             EthTransferred("forwarding funds to vault");
+            if (((totalWeiInICO + totalWeiInPreICO) >= currentWaveCap()) && ((totalWeiInICO + totalWeiInPreICO) <= tokensCap)) {
+                incrementWave();
+            }
+
         }
     }
 
@@ -136,11 +180,11 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     // Requires a call to the public finalize method, only after the sale hasEnded
     function finalization() internal {
         //mint tokens up to total cap
-         if (token.totalSupply() < tokensCap) {
-          mintTokens(remainingTokensWallet, tokensCap.sub(token.totalSupply()));
-         }
+        if (token.totalSupply() < tokensCap) {
+            mintTokens(remainingTokensWallet, tokensCap.sub(token.totalSupply()));
+        }
         //no more tokens from now on
-         token.finishMinting();
+        token.finishMinting();
         isFinalized = true;
         return super.finalization();
     }
@@ -148,11 +192,8 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
 
     function mintTokens(address beneficiary, uint256 tokens) public onlyOwner {
         require(beneficiary != 0x0);
-
         // Cannot mint after sale is closed
         require(!isFinalized);
-
-
         token.mint(beneficiary, tokens);
         TokenMint(beneficiary, tokens);
     }
