@@ -19,6 +19,21 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     // -------------------------
     uint256 public totalWeiInPreICO;
     // -----------------------
+    uint256 private bonus;
+
+    // Token Distribution
+    // -------------------
+    uint256 public maxTokens = 1000000000000 * power(10,18); // There will be total 1000000000000 HRC Tokens
+    uint256 public tokensForEcosystem = 200000000000 * power(10,18);
+    uint256 public tokensForTeam = 200000000000* power(10,18);
+    uint256 public tokensForBounty = 100000000000* power(10,18);
+    uint256 public totalTokensForSale = 600000000000 * power(10,18); // 600000000000 HRCs will be sold in Crowdsale
+    uint256 public totalTokensForSaleDuringPreICO = 100000000000 * power(10,18); // 100000000000 out of 600000000000 HRC will be sold during PreICO
+    // ==============================
+
+    function power(uint256 A, uint256 B) public returns (uint256){
+        return A**B;
+    }
 
     // Events
     event EthTransferred(string text);
@@ -31,16 +46,14 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     RefundableCrowdsale(_goal)
     Crowdsale(_startTime, _endTime, _rate, _wallet) {
         require(_goal <= _cap);
-
     }
 
     // HRC Crowdsale Stages
     // -----------------------
 
-    // Change Crowdsale Stage. Available Options: PreICO, ICO
+    // Change Crowdsale Stage. Available Options: PreICO, ICOWave1
 
     function setCrowdsaleStage(uint value) public onlyOwner {
-
         CrowdsaleStage _stage;
 
         if (uint(CrowdsaleStage.PreICO) == value) {
@@ -51,23 +64,19 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
 
         stage = _stage;
 
-        if (stage == CrowdsaleStage.PreICO) {
-            setCurrentRate(2);
-        } else if (stage == CrowdsaleStage.ICOWave1) {
-            setCurrentRate(1); //TODO: must be 1.5 for first wave
-        }
+        if (stage == CrowdsaleStage.PreICO)   {setCurrentBonus(200);}
+        if (stage == CrowdsaleStage.ICOWave1) {setCurrentBonus(100);}
+        if (stage == CrowdsaleStage.ICOWave2) {setCurrentBonus(75);}
+        if (stage == CrowdsaleStage.ICOWave3) {setCurrentBonus(50);}
+        if (stage == CrowdsaleStage.ICOWave4) {setCurrentBonus(25);}
     }
 
-    // Change the current rate
-    function setCurrentRate(uint256 _rate) private {
-        rate = _rate;
+    // Change the current bonus
+    function setCurrentBonus(uint256 _bonus) private {
+        bonus = _bonus;
     }
 
     //---------------------------end stages----------------------------------
-
-    // Token Purchase
-    // ------------------------
-
 
     // creates the token to be sold.
     // override this method to have crowdsale of a specific MintableToken token.
@@ -83,14 +92,15 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     // Override this method to have a way to add business logic to your crowdsale when buying
     // Returns weiAmount times rate by default
     function getTokenAmount(uint256 weiAmount) internal view returns (uint256) {
-        return super.getTokenAmount(weiAmount * rate);
-    }
+        return super.getTokenAmount((weiAmount) + (weiAmount * bonus)); //give them the bonus
+        }
 
     // Override to create custom fund forwarding mechanisms
     // Forwards funds to the specified wallet by default
     function forwardFunds() internal {
         if (stage == CrowdsaleStage.PreICO) {
             wallet.transfer(msg.value);
+            totalWeiInPreICO = totalWeiInPreICO.add(msg.value);
             EthTransferred("forwarding funds to wallet");
         } else if (stage == CrowdsaleStage.ICOWave1) {
             super.forwardFunds();
