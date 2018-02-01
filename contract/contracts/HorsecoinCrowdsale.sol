@@ -63,6 +63,7 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
         remainingTokensWallet = _wallet;
         wallet = _wallet;
         tokensCap = _cap;
+
         // allocate tokens to Owners
         mintTokens(_teamWallet, tokensForTeam);
         mintTokens(_ecosystemWallet, tokensForEcosystem);
@@ -72,25 +73,19 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     // HRC Crowdsale Stages
     // -----------------------
 
-    // Change Crowdsale Stage. Available Options: PreICO, ICOWave1
+    // Change Crowdsale Stage. Available Options: PreICO, ICOWave1, ICOWave2, ICOWave3, ICOWave4
 
-    //TODO: Automate switch off stage
+    //TODO: Automate switching of stages
     function setCrowdsaleStage(uint value) public onlyOwner {
         CrowdsaleStage _stage;
 
-        if (uint(CrowdsaleStage.PreICO) == value) {
-            _stage = CrowdsaleStage.PreICO;
-        } else if (uint(CrowdsaleStage.ICOWave1) == value) {
-            _stage = CrowdsaleStage.ICOWave1;
-        }
+        if (value == uint(CrowdsaleStage.PreICO))     {setCurrentBonus(200);  _stage = CrowdsaleStage.PreICO;}
+        if (value == uint(CrowdsaleStage.ICOWave1))   {setCurrentBonus(100);  _stage = CrowdsaleStage.ICOWave1;}
+        if (value == uint(CrowdsaleStage.ICOWave2))    {setCurrentBonus(75);  _stage = CrowdsaleStage.ICOWave2;}
+        if (value == uint(CrowdsaleStage.ICOWave3))    {setCurrentBonus(50);  _stage = CrowdsaleStage.ICOWave3;}
+        if (value == uint(CrowdsaleStage.ICOWave4))    {setCurrentBonus(25);  _stage = CrowdsaleStage.ICOWave4;}
 
         stage = _stage;
-
-        if (stage == CrowdsaleStage.PreICO)     {setCurrentBonus(200);}
-        if (stage == CrowdsaleStage.ICOWave1)   {setCurrentBonus(100);}
-        if (stage == CrowdsaleStage.ICOWave2)   {setCurrentBonus(75);}
-        if (stage == CrowdsaleStage.ICOWave3)   {setCurrentBonus(50);}
-        if (stage == CrowdsaleStage.ICOWave4)   {setCurrentBonus(25);}
     }
 
     // Change the current bonus
