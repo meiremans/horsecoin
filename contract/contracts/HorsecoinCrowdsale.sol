@@ -13,8 +13,8 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     CrowdsaleStage public stage = CrowdsaleStage.PreICO;
 
 
-    address wallet = 0xb8D2Adb361e3C631951b636Dd6f68C7182d2E6c6;
-    address remainingTokensWallet = 0xb8D2Adb361e3C631951b636Dd6f68C7182d2E6c6;
+    address private wallet;
+    address private remainingTokensWallet;
 
     // Amount raised in PreICO
     // -------------------------
@@ -76,20 +76,13 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
 
     // Change Crowdsale Stage. Available Options: PreICO, ICOWave1, ICOWave2, ICOWave3, ICOWave4
 
-    //TODO: Automate switching of stages
-    function setCrowdsaleStage(uint value) public onlyOwner {
-        CrowdsaleStage _stage;
+    function setCrowdsaleStage(CrowdsaleStage _stage) private {
 
-        if (value == uint(CrowdsaleStage.PreICO)) {setCurrentBonus(200);
-            _stage = CrowdsaleStage.PreICO;}
-        if (value == uint(CrowdsaleStage.ICOWave1)) {setCurrentBonus(100);
-            _stage = CrowdsaleStage.ICOWave1;}
-        if (value == uint(CrowdsaleStage.ICOWave2)) {setCurrentBonus(75);
-            _stage = CrowdsaleStage.ICOWave2;}
-        if (value == uint(CrowdsaleStage.ICOWave3)) {setCurrentBonus(50);
-            _stage = CrowdsaleStage.ICOWave3;}
-        if (value == uint(CrowdsaleStage.ICOWave4)) {setCurrentBonus(25);
-            _stage = CrowdsaleStage.ICOWave4;}
+        if (_stage == CrowdsaleStage.PreICO) {setCurrentBonus(200);}
+        if (_stage == CrowdsaleStage.ICOWave1) {setCurrentBonus(100);}
+        if (_stage == CrowdsaleStage.ICOWave2) {setCurrentBonus(75);}
+        if (_stage == CrowdsaleStage.ICOWave3) {setCurrentBonus(50);}
+        if (_stage == CrowdsaleStage.ICOWave4) {setCurrentBonus(25);}
 
         stage = _stage;
     }
@@ -114,16 +107,16 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
 
     function incrementWave() private returns (uint256){
         if (stage == CrowdsaleStage.PreICO) {
-            stage = CrowdsaleStage.ICOWave1;
+            setCrowdsaleStage(CrowdsaleStage.ICOWave1);
         }
         if (stage == CrowdsaleStage.ICOWave1) {
-            stage = CrowdsaleStage.ICOWave2;
+            setCrowdsaleStage(CrowdsaleStage.ICOWave2);
         }
         if (stage == CrowdsaleStage.ICOWave2) {
-            stage = CrowdsaleStage.ICOWave3;
+            setCrowdsaleStage(CrowdsaleStage.ICOWave3);
         }
         if (stage == CrowdsaleStage.ICOWave3) {
-            stage = CrowdsaleStage.ICOWave4;
+            setCrowdsaleStage(CrowdsaleStage.ICOWave4);
         }
     }
 
