@@ -5,9 +5,10 @@ import "zeppelin-solidity/contracts/crowdsale/CappedCrowdsale.sol";
 import "zeppelin-solidity/contracts/crowdsale/RefundableCrowdsale.sol";
 import 'zeppelin-solidity/contracts/crowdsale/Crowdsale.sol';
 import "zeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
+import "zeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
 
 
-contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
+contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale,Pausable {
 
     enum CrowdsaleStage {PreICO, ICOWave1, ICOWave2, ICOWave3, ICOWave4}
     CrowdsaleStage public stage = CrowdsaleStage.PreICO;
@@ -28,9 +29,9 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     // Token Distribution
     // -------------------
     uint256 public tokensForEcosystem = 100000000 * power(10, 18); // There will be total 100.000.000 HRC Tokens fot the ecosystem
-    uint256 public tokensForTeam = 100000000 * power(10, 18);// There will be total 100.000.000 HRC Tokens for the team
-    uint256 public tokensForBounty = 100000000 * power(10, 18); // There will be total 100.000.000 HRC Tokens for bounties
-    uint256 public totalTokensForSale = 100000000 * power(10, 18); // 100.000.000 HRCs will be sold in Crowdsale
+    uint256 public tokensForTeam = 50000000 * power(10, 18);// There will be total 50.000.000 HRC Tokens for the team
+    uint256 public tokensForBounty = 1000000 * power(10, 18); // There will be total 1.000.000 HRC Tokens for bounties
+    uint256 public totalTokensForSale = 400000000 * power(10, 18); // 400.000.000 HRCs will be sold in Crowdsale
     uint256 public totalTokensForSaleDuringPreICO = 10000000 * power(10, 18); // 10.000.000 out of 500.000.000 HRC will be sold during PreICO
     // ==============================
 
@@ -183,7 +184,7 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     }
 
 
-    function mintTokens(address beneficiary, uint256 tokens) public onlyOwner {
+    function mintTokens (address beneficiary, uint256 tokens) whenNotPaused  public onlyOwner {
         require(beneficiary != 0x0);
         // Cannot mint after sale is closed
         require(!isFinalized);

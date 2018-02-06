@@ -11,10 +11,10 @@ function getWalletsForNetwork(network, accounts) {
     }
     if (network === "ropsten") {
         console.log(accounts);
-        wallets.owner = '0x627306090abaB3A6e1400e9345bC60c78a8BEf57';
-        wallets.team = '0xC5fdf4076b8F3A5357c5E395ab970B5B54098Fef';
-        wallets.ecosystem = '0x0d1d4e623D10F9FBA5Db95830F7d3839406C6AF2';
-        wallets.bounty = '0x0d1d4e623D10F9FBA5Db95830F7d3839406C6AF2';
+        wallets.owner = '0x8d3afe0bd3e0fbf96e6a78103d100c359e0b17e5';
+        wallets.team = '0x8d3afe0bd3e0fbf96e6a78103d100c359e0b17e5';
+        wallets.ecosystem = '0x8d3afe0bd3e0fbf96e6a78103d100c359e0b17e5';
+        wallets.bounty = '0x8d3afe0bd3e0fbf96e6a78103d100c359e0b17e5';
 
     }
     return wallets;
@@ -35,8 +35,8 @@ module.exports = function (deployer, network, accounts) {
 
                 if (block) {
                     console.log(block);
-                    const startTime = block.timestamp + duration.seconds(1); // one second in the future
-                    const endTime = startTime + duration.minutes(5);//TODO: RESET TO: duration.days(178); // half a year
+                    const startTime = block.timestamp + duration.seconds(90); // one second in the future
+                    const endTime = startTime + duration.days(2);//TODO: RESET TO: duration.days(178); // half a year
                     const rate = new web3.BigNumber(RATE);
                     const cap = new web3.BigNumber(5 * Math.pow(10, 18));
                     const goal = new web3.BigNumber(3 * Math.pow(10, 18));
