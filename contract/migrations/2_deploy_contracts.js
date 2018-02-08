@@ -35,7 +35,7 @@ module.exports = function (deployer, network, accounts) {
 
                 if (block) {
                     console.log(block);
-                    const startTime = block.timestamp + duration.seconds(90); // one second in the future
+                    const startTime = block.timestamp + duration.weeks(1); // one second in the future
                     const endTime = startTime + duration.days(2);//TODO: RESET TO: duration.days(178); // half a year
                     const rate = new web3.BigNumber(RATE);
                     const cap = new web3.BigNumber(5 * Math.pow(10, 18));

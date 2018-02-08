@@ -31,8 +31,10 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale,Pausable {
     uint256 public tokensForEcosystem = 100000000 * power(10, 18); // There will be total 100.000.000 HRC Tokens fot the ecosystem
     uint256 public tokensForTeam = 50000000 * power(10, 18);// There will be total 50.000.000 HRC Tokens for the team
     uint256 public tokensForBounty = 1000000 * power(10, 18); // There will be total 1.000.000 HRC Tokens for bounties
-    uint256 public totalTokensForSale = 400000000 * power(10, 18); // 400.000.000 HRCs will be sold in Crowdsale
+    uint256 public totalTokensForSale = 339000000 * power(10, 18); // 339.000.000 HRCs will be sold in Crowdsale
     uint256 public totalTokensForSaleDuringPreICO = 10000000 * power(10, 18); // 10.000.000 out of 500.000.000 HRC will be sold during PreICO
+
+
     // ==============================
 
     function power(uint256 A, uint256 B) public returns (uint256){
