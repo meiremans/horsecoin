@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import './Horsecoin.sol';
+import './MathHelp.sol';
 import "zeppelin-solidity/contracts/crowdsale/CappedCrowdsale.sol";
 import "zeppelin-solidity/contracts/crowdsale/RefundableCrowdsale.sol";
 import 'zeppelin-solidity/contracts/crowdsale/Crowdsale.sol';
@@ -8,13 +9,16 @@ import "zeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 import "zeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
 
 
-contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale,Pausable {
+contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
 
     enum CrowdsaleStage {PreICO, ICOWave1, ICOWave2, ICOWave3, ICOWave4}
     CrowdsaleStage public stage = CrowdsaleStage.PreICO;
 
-
+    MathHelp math = new MathHelp();
     address private wallet;
+    address private teamWallet;
+    address private ecosystemWallet;
+    address private bountyWallet;
     address private remainingTokensWallet;
 
     // Amount raised in PreICO
@@ -28,18 +32,14 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale,Pausable {
 
     // Token Distribution
     // -------------------
-    uint256 public tokensForEcosystem = 100000000 * power(10, 18); // There will be total 100.000.000 HRC Tokens fot the ecosystem
-    uint256 public tokensForTeam = 50000000 * power(10, 18);// There will be total 50.000.000 HRC Tokens for the team
-    uint256 public tokensForBounty = 1000000 * power(10, 18); // There will be total 1.000.000 HRC Tokens for bounties
-    uint256 public totalTokensForSale = 339000000 * power(10, 18); // 339.000.000 HRCs will be sold in Crowdsale
-    uint256 public totalTokensForSaleDuringPreICO = 10000000 * power(10, 18); // 10.000.000 out of 500.000.000 HRC will be sold during PreICO
+    uint256 public tokensForEcosystem = 100000000 * math.power(10, 18); // There will be total 100.000.000 HRC Tokens fot the ecosystem
+    uint256 public tokensForTeam = 50000000 * math.power(10, 18);// There will be total 50.000.000 HRC Tokens for the team
+    uint256 public tokensForBounty = 1000000 * math.power(10, 18); // There will be total 1.000.000 HRC Tokens for bounties
+    uint256 public totalTokensForSale = 339000000 * math.power(10, 18); // 339.000.000 HRCs will be sold in Crowdsale
+    uint256 public totalTokensForSaleDuringPreICO = 10000000 * math.power(10, 18); // 10.000.000 out of 500.000.000 HRC will be sold during PreICO
 
 
     // ==============================
-
-    function power(uint256 A, uint256 B) public returns (uint256){
-        return A ** B;
-    }
 
     // Events
     event EthTransferred(string text);
@@ -67,11 +67,9 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale,Pausable {
         remainingTokensWallet = _wallet;
         wallet = _wallet;
         tokensCap = _cap;
-
-        // allocate tokens to Owners
-        mintTokens(_teamWallet, tokensForTeam);
-        mintTokens(_ecosystemWallet, tokensForEcosystem);
-        mintTokens(_bountyWallet, tokensForBounty);
+        teamWallet = _teamWallet;
+        ecosystemWallet = _ecosystemWallet;
+        bountyWallet = _bountyWallet;
     }
 
     // HRC Crowdsale Stages
@@ -175,18 +173,31 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale,Pausable {
     // Override to execute any logic once the crowdsale finalizes
     // Requires a call to the public finalize method, only after the sale hasEnded
     function finalization() internal {
+        uint256 totalSold = token.totalSupply();
+
         //mint tokens up to total cap
         if (token.totalSupply() < tokensCap) {
             mintTokens(remainingTokensWallet, tokensCap.sub(token.totalSupply()));
         }
         //no more tokens from now on
         token.finishMinting();
-        isFinalized = true;
         return super.finalization();
     }
 
+    function finalize() public {
 
-    function mintTokens (address beneficiary, uint256 tokens) whenNotPaused  public onlyOwner {
+        uint256 tokenSupplyBeforeExtraMinting = token.totalSupply();
+        require(!isFinalized);
+        require(hasEnded());
+        mintTokens(teamWallet, math.getPercentAmount(tokenSupplyBeforeExtraMinting,20,18));
+        mintTokens(bountyWallet, math.getPercentAmount(tokenSupplyBeforeExtraMinting,5,18));
+        mintTokens(ecosystemWallet, math.getPercentAmount(tokenSupplyBeforeExtraMinting,20,18));
+        finalization();
+        isFinalized = true;
+    }
+
+
+    function mintTokens(address beneficiary, uint256 tokens) whenNotPaused public onlyOwner {
         require(beneficiary != 0x0);
         // Cannot mint after sale is closed
         require(!isFinalized);
