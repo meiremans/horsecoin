@@ -40,10 +40,16 @@ module.exports = function (deployer, network, accounts) {
                     const rate = new web3.BigNumber(RATE);
                     const cap = new web3.BigNumber(5 * Math.pow(10, 18));
                     const goal = new web3.BigNumber(3 * Math.pow(10, 18));
+                    const CAP_PREICO = new web3.BigNumber(1 * Math.pow(10, 18));
+                    const CAP_WAVE1 = CAP_PREICO.add(new web3.BigNumber(1 * Math.pow(10, 18)));// IN ETH
+                    const CAP_WAVE2 = CAP_WAVE1.add(new web3.BigNumber(1 * Math.pow(10, 18)));// IN ETH
+                    const CAP_WAVE3 = CAP_WAVE2.add(new web3.BigNumber(1 * Math.pow(10, 18)));// IN ETH
+                    const CAP_WAVE4 = CAP_WAVE3.add( new web3.BigNumber(1 * Math.pow(10, 18)));// IN ETH
+
                     const wallets = getWalletsForNetwork(network, accounts);
                     console.log(wallets);
 
-                    deployer.deploy(HorsecoinCrowdsale, startTime, endTime, rate, cap, goal, wallets.owner, wallets.team, wallets.ecosystem, wallets.bounty).then(async () => {
+                    deployer.deploy(HorsecoinCrowdsale, startTime, endTime, rate, cap, goal,CAP_PREICO,CAP_WAVE1,CAP_WAVE2,CAP_WAVE3,CAP_WAVE4, wallets.owner, wallets.team, wallets.ecosystem, wallets.bounty).then(async () => {
                         const instance = await HorsecoinCrowdsale.deployed();
                         const token = await instance.token.call();
 

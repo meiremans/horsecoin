@@ -11,7 +11,7 @@ import "zeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
 
 contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
 
-    enum CrowdsaleStage {PreICO, ICOWave1, ICOWave2, ICOWave3, ICOWave4}
+    enum CrowdsaleStage {PreICO, ICOWave1, ICOWave2, ICOWave3, ICOWave4, ICOFinished}
     CrowdsaleStage public stage = CrowdsaleStage.PreICO;
 
     MathHelp math = new MathHelp();
@@ -27,7 +27,13 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
     uint256 public totalWeiInICO;
     // -----------------------
     uint256 private bonus;
+    uint256 private rate;
     uint256 private tokensCap;
+    uint256 private PRE_ICO_CAP_ETH;
+    uint256 private CAP_WAVE1;
+    uint256 private CAP_WAVE2;
+    uint256 private CAP_WAVE3;
+    uint256 private CAP_WAVE4;
     bool isFinalized;
 
     // Token Distribution
@@ -36,7 +42,7 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
     uint256 public tokensForTeam = 50000000 * math.power(10, 18);// There will be total 50.000.000 HRC Tokens for the team
     uint256 public tokensForBounty = 1000000 * math.power(10, 18); // There will be total 1.000.000 HRC Tokens for bounties
     uint256 public totalTokensForSale = 339000000 * math.power(10, 18); // 339.000.000 HRCs will be sold in Crowdsale
-    uint256 public totalTokensForSaleDuringPreICO = 10000000 * math.power(10, 18); // 10.000.000 out of 500.000.000 HRC will be sold during PreICO
+    uint256 public totalTokensForSaleDuringPreICO;
 
 
     // ==============================
@@ -58,7 +64,7 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
         * @param _ecosystemWallet wallet for the ecosystem
         * @param _bountyWallet wallet for the bounties
     */
-    function HorseCoinCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _cap, uint256 _goal, address _wallet, address _teamWallet, address _ecosystemWallet, address _bountyWallet) public
+    function HorseCoinCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _cap, uint256 _goal, uint256 _preIcoCap,uint256 _capWave1,uint256 _capWave2,uint256 _capWave3,uint256 _capWave4, address _wallet, address _teamWallet, address _ecosystemWallet, address _bountyWallet) public
     CappedCrowdsale(_cap)
     FinalizableCrowdsale()
     RefundableCrowdsale(_goal)
@@ -67,9 +73,18 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
         remainingTokensWallet = _wallet;
         wallet = _wallet;
         tokensCap = _cap;
+        rate = _rate;
+        PRE_ICO_CAP_ETH = _preIcoCap;
+        CAP_WAVE1 = _capWave1;
+        CAP_WAVE2 = _capWave2;
+        CAP_WAVE3 = _capWave3;
+        CAP_WAVE4 = _capWave4;
         teamWallet = _teamWallet;
         ecosystemWallet = _ecosystemWallet;
         bountyWallet = _bountyWallet;
+
+        totalTokensForSaleDuringPreICO = _preIcoCap * _rate; //PRE-ICO CAP IS IN WEI, CONVERT TO TOKEN AMOUNT
+        setCrowdsaleStage(stage);
     }
 
     // HRC Crowdsale Stages
@@ -88,36 +103,45 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
         stage = _stage;
     }
 
-    function currentWaveCap() private returns (uint256) {
+    function getCurrentStage() public constant returns (CrowdsaleStage){
+        return stage;
+    }
+
+    function currentWaveCap() public constant returns (uint256) {
         if (stage == CrowdsaleStage.PreICO) {
-            return totalTokensForSaleDuringPreICO;
+            return PRE_ICO_CAP_ETH;
         }
         if (stage == CrowdsaleStage.ICOWave1) {
-            return totalTokensForSaleDuringPreICO + (totalTokensForSaleDuringPreICO / 4);
+            return CAP_WAVE1;
         }
         if (stage == CrowdsaleStage.ICOWave2) {
-            return totalTokensForSaleDuringPreICO + ((totalTokensForSaleDuringPreICO / 4) * 2);
+            return CAP_WAVE2;
         }
         if (stage == CrowdsaleStage.ICOWave3) {
-            return totalTokensForSaleDuringPreICO + ((totalTokensForSaleDuringPreICO / 4) * 3);
+            return CAP_WAVE3;
         }
         if (stage == CrowdsaleStage.ICOWave4) {
-            return totalTokensForSaleDuringPreICO + (totalTokensForSaleDuringPreICO);
+            return CAP_WAVE4;
         }
     }
 
-    function incrementWave() private returns (uint256){
+    function incrementWave() private {
         if (stage == CrowdsaleStage.PreICO) {
             setCrowdsaleStage(CrowdsaleStage.ICOWave1);
+            return;
         }
         if (stage == CrowdsaleStage.ICOWave1) {
             setCrowdsaleStage(CrowdsaleStage.ICOWave2);
+
+            return;
         }
         if (stage == CrowdsaleStage.ICOWave2) {
             setCrowdsaleStage(CrowdsaleStage.ICOWave3);
+            return;
         }
         if (stage == CrowdsaleStage.ICOWave3) {
             setCrowdsaleStage(CrowdsaleStage.ICOWave4);
+            return;
         }
     }
 
@@ -142,7 +166,7 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
     // Override this method to have a way to add business logic to your crowdsale when buying
     // Returns weiAmount times rate by default
     function getTokenAmount(uint256 weiAmount) internal view returns (uint256) {
-        return super.getTokenAmount((weiAmount) + (weiAmount * bonus));
+        return super.getTokenAmount(weiAmount + math.getPercentAmount(weiAmount, bonus, 18));
         //give them the bonus
     }
 
@@ -151,17 +175,24 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
     function forwardFunds() internal {
         if (stage == CrowdsaleStage.PreICO) {
             wallet.transfer(msg.value);
-            totalWeiInPreICO = totalWeiInPreICO.add(msg.value);
+            totalWeiInPreICO = totalWeiInPreICO + msg.value;
+            if (shouldIncrementWave(totalWeiInICO,totalWeiInPreICO,currentWaveCap())) {
+                incrementWave();
+            }
             EthTransferred("forwarding funds to wallet");
         } else {
             super.forwardFunds();
             totalWeiInICO = totalWeiInICO.add(msg.value);
             EthTransferred("forwarding funds to vault");
-            if (((totalWeiInICO + totalWeiInPreICO) >= currentWaveCap()) && ((totalWeiInICO + totalWeiInPreICO) <= tokensCap)) {
+            if (shouldIncrementWave(totalWeiInICO,totalWeiInPreICO,currentWaveCap())) {
                 incrementWave();
             }
 
         }
+    }
+
+    function shouldIncrementWave(uint256 _totalWeiInICO, uint256 _totalWeiInPreIco, uint256 _currentWaveCap) constant public returns (bool){
+        return (_totalWeiInICO + _totalWeiInPreIco) >= _currentWaveCap;
     }
 
     // Criteria for accepting a purchase
@@ -189,9 +220,9 @@ contract HorseCoinCrowdsale is CappedCrowdsale, RefundableCrowdsale, Pausable {
         uint256 tokenSupplyBeforeExtraMinting = token.totalSupply();
         require(!isFinalized);
         require(hasEnded());
-        mintTokens(teamWallet, math.getPercentAmount(tokenSupplyBeforeExtraMinting,20,18));
-        mintTokens(bountyWallet, math.getPercentAmount(tokenSupplyBeforeExtraMinting,5,18));
-        mintTokens(ecosystemWallet, math.getPercentAmount(tokenSupplyBeforeExtraMinting,20,18));
+        mintTokens(teamWallet, math.getPercentAmount(tokenSupplyBeforeExtraMinting, 20, 18));
+        mintTokens(bountyWallet, math.getPercentAmount(tokenSupplyBeforeExtraMinting, 5, 18));
+        mintTokens(ecosystemWallet, math.getPercentAmount(tokenSupplyBeforeExtraMinting, 20, 18));
         finalization();
         isFinalized = true;
     }

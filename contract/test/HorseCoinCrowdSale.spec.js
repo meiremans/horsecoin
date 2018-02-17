@@ -1,6 +1,6 @@
 import ether from './helpers/ether';
-import { advanceBlock } from './helpers/advanceToBlock';
-import { increaseTimeTo, duration } from './helpers/increaseTime';
+import {advanceBlock} from './helpers/advanceToBlock';
+import {increaseTimeTo, duration} from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 
 const BigNumber = web3.BigNumber;
@@ -26,9 +26,14 @@ contract('HorseCoinCrowdSale', function (accounts) {
     let bounty = accounts[9];
 
     console.log(investor);
-    const RATE = new web3.BigNumber(100000);
-    const CAP = new web3.BigNumber(5 * Math.pow(10, 18));
-    const GOAL = new web3.BigNumber(3 * Math.pow(10, 18));
+    const RATE = new web3.BigNumber(100000); // HOW MUCH TOKEN FOR 1 ETH
+    const CAP = new web3.BigNumber(5 * Math.pow(10, 18)); // IN ETH
+    const CAP_PREICO = new web3.BigNumber(1 * Math.pow(10, 18));// IN ETH
+    const CAP_WAVE1 = CAP_PREICO.add(new web3.BigNumber(1 * Math.pow(10, 18)));// IN ETH
+    const CAP_WAVE2 = CAP_WAVE1.add(new web3.BigNumber(1 * Math.pow(10, 18)));// IN ETH
+    const CAP_WAVE3 = CAP_WAVE2.add(new web3.BigNumber(1 * Math.pow(10, 18)));// IN ETH
+    const CAP_WAVE4 = CAP_WAVE3.add( new web3.BigNumber(1 * Math.pow(10, 18)));// IN ETH
+    const GOAL = new web3.BigNumber(3 * Math.pow(10, 18)); // IN ETH
 
 
     before(async function () {
@@ -40,11 +45,11 @@ contract('HorseCoinCrowdSale', function (accounts) {
         this.startTime = (latestTime() + duration.weeks(1));
         this.endTime = this.startTime + duration.weeks(500);
         this.afterEndTime = this.endTime + duration.seconds(90);
-        this.crowdsale = await HorseCoinCrowdSale.new(this.startTime, this.endTime, RATE, CAP,GOAL, wallet,team,ecosystem,bounty);
+        this.crowdsale = await HorseCoinCrowdSale.new(this.startTime, this.endTime, RATE, CAP, GOAL, CAP_PREICO,CAP_WAVE1,CAP_WAVE2,CAP_WAVE3,CAP_WAVE4, wallet, team, ecosystem, bounty);
         this.token = HorsecoinToken.at(await this.crowdsale.token());
     });
 
-   it('should create crowdsale with correct parameters', async function () {
+    it('should create crowdsale with correct parameters', async function () {
         this.crowdsale.should.exist;
         this.token.should.exist;
 
@@ -63,27 +68,36 @@ contract('HorseCoinCrowdSale', function (accounts) {
 
 
     it('should not accept payments before start', async function () {
-       transactionFailed(await this.crowdsale.send(ether(1))).should.equal(true);
-       transactionFailed(await this.crowdsale.buyTokens(investor, { from: investor, value: ether(1) })).should.equal(true);
+        transactionFailed(await this.crowdsale.send(ether(1))).should.equal(true);
+        transactionFailed(await this.crowdsale.buyTokens(investor, {
+            from: investor,
+            value: ether(1)
+        })).should.equal(true);
     });
 
 
     it('should accept payments during the sale', async function () {
         const investmentAmount = ether(1);
-        const expectedTokenAmount = new web3.BigNumber(investmentAmount * RATE);
+        //const expectedTokenAmount = new web3.BigNumber(investmentAmount * RATE);
 
         await increaseTimeTo(this.startTime);
-        transactionFailed(await this.crowdsale.buyTokens(investor, { value: investmentAmount, from: investor })).should.equal(false);
+        transactionFailed(await this.crowdsale.buyTokens(investor, {
+            value: investmentAmount,
+            from: investor
+        })).should.equal(false);
 
-        (await this.token.balanceOf(investor)).should.be.bignumber.equal(expectedTokenAmount);
+        assert.isAtLeast(await this.token.balanceOf(investor),1,"NO MONEY RECEIVED");
 
     });
 
-     it('should reject payments after end', async function () {
-       await increaseTimeTo(this.afterEndTime);
+    it('should reject payments after end', async function () {
+        await increaseTimeTo(this.afterEndTime);
         transactionFailed(await this.crowdsale.send(ether(1))).should.equal(true);
-         transactionFailed(await this.crowdsale.buyTokens(investor, { value: ether(1), from: investor })).should.equal(true);
-   });
+        transactionFailed(await this.crowdsale.buyTokens(investor, {
+            value: ether(1),
+            from: investor
+        })).should.equal(true);
+    });
 
     it('should reject payments over cap', async function () {
         await increaseTimeTo(this.startTime);
@@ -96,29 +110,71 @@ contract('HorseCoinCrowdSale', function (accounts) {
         transactionFailed(await this.crowdsale.finalize({from: owner})).should.equal(false);
         transactionFailed(await this.crowdsale.finalize({from: owner})).should.equal(true);
     });
-    it('should mint a token',async function (){
+    it('should mint a token', async function () {
         await increaseTimeTo(this.startTime);
-        await this.crowdsale.mintTokens(investor,1);
+        await this.crowdsale.mintTokens(investor, 1);
         (await this.token.balanceOf(investor)).should.be.bignumber.equal(1);
 
     });
 
     it('should give the correct amount to the wallets after the crowdsale finalizes', async function () {
-        const investmentAmount = 5 * Math.pow(10, 18);
-        const forEcosystem = (investmentAmount * 0.2 * RATE);
-        const forBounties = ((investmentAmount * 0.05) * RATE);
-        const forTeam = (investmentAmount * 0.2 * RATE);
+        const investmentAmount = 1 * Math.pow(10, 18);
+        const forEcosystem = ((investmentAmount * 0.2 * RATE))* 3;
+        const forBounties = ((investmentAmount * 0.05) * RATE)* 3;
+        const forTeam = (investmentAmount * 0.2 * RATE)* 3;
 
         await increaseTimeTo(this.startTime);
-        transactionFailed(await this.crowdsale.buyTokens(investor, { value: investmentAmount, from: investor })).should.equal(false);
+        transactionFailed(await this.crowdsale.buyTokens(investor, {
+            value: investmentAmount,
+            from: investor
+        })).should.equal(false);
         await increaseTimeTo(this.afterEndTime);
         await this.crowdsale.finalize().should.be.fulfilled;
+
         (new BigNumber(await this.token.balanceOf(ecosystem))).should.be.bignumber.equal(forEcosystem);
         (new BigNumber(await this.token.balanceOf(bounty))).should.be.bignumber.equal(forBounties);
         (new BigNumber(await this.token.balanceOf(team))).should.be.bignumber.equal(forTeam);
     });
+
+    it('should give the PreIco bonus during pre ICO', async function () {
+        const investmentAmount = 1 * Math.pow(10, 18);
+        const shouldGet = ((investmentAmount * 0.2 * RATE)* 3)*5;
+
+        await increaseTimeTo(this.startTime);
+        transactionFailed(await this.crowdsale.buyTokens(investor, {
+            value: investmentAmount,
+            from: investor
+        })).should.equal(false);
+        (await this.token.balanceOf(investor)).toNumber().should.equal(shouldGet);
+    });
+
+    it('should give the current Stage', async function () {
+        await increaseTimeTo(this.startTime);
+        (await this.crowdsale.getCurrentStage()).should.be.bignumber.equal(0);
+    });
+    it('should increase the stage when over current stage cap', async function () {
+        await increaseTimeTo(this.startTime);
+        transactionFailed(await this.crowdsale.buyTokens(investor, {
+            value:  CAP_PREICO - 100000,
+            from: investor
+        })).should.equal(false);
+        (await this.crowdsale.getCurrentStage()).should.be.bignumber.equal(0);
+        transactionFailed(await this.crowdsale.buyTokens(investor, {
+            value: 100000,
+            from: investor
+        })).should.equal(false);
+        (await this.crowdsale.getCurrentStage()).should.be.bignumber.equal(1);
+    });
+    it('should say whether to increment the wave or not', async function () {
+       (await this.crowdsale.shouldIncrementWave(0,0,CAP_PREICO)).should.equal(false);
+       (await this.crowdsale.shouldIncrementWave(0,CAP_PREICO ,CAP_PREICO)).should.equal(true);
+       (await this.crowdsale.shouldIncrementWave(CAP_WAVE1,CAP_PREICO,CAP_WAVE1)).should.equal(true);
+       (await this.crowdsale.shouldIncrementWave(CAP_WAVE2,CAP_PREICO,CAP_WAVE2)).should.equal(true);
+       (await this.crowdsale.shouldIncrementWave(CAP_WAVE3,CAP_PREICO,CAP_WAVE3)).should.equal(true);
+       (await this.crowdsale.shouldIncrementWave(CAP_WAVE4,CAP_PREICO,CAP_WAVE4)).should.equal(true);
+    });
 });
 
-function transactionFailed(tx){
+function transactionFailed(tx) {
     return tx.receipt.status === '0x00';
 }
